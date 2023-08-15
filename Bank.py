@@ -187,11 +187,11 @@ def main():
         if validate_password(user_global):
             count_failed = 0
             while True:
-                if user_global is None:
-                    user_global = enter_account(data_global)
-                    while True:
-                        if validate_password(user_global):
-                            break
+                # if user_global is None:
+                #     user_global = enter_account(data_global)
+                #     while True:
+                #         if validate_password(user_global):
+                #             break
 
                 print("--- Chào mừng đến với ABC BANK ---")
                 print(''' Chức năng : 
@@ -199,8 +199,7 @@ def main():
                 2. Chuyển tiền
                 3. Kiểm tra số dư
                 4. Đổi mật khẩu
-                5. Đổi tài khoản
-                6. Kết thúc
+                5. Kết thúc
                 ''')
                 action = input("Nhập lựa chọn : ")
                 # Đặt lại giá trị cho user và danh sách user sau mỗi thao tác
@@ -215,9 +214,9 @@ def main():
                 elif action == '4':
                     user_global = change_password(user_global, data_global)
                     data_global = load_data(DATA_FILE_PATH)
+                # elif action == '5':
+                #     user_global = None
                 elif action == '5':
-                    user_global = None
-                elif action == '6':
                     exit()
                 else:
                     print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
