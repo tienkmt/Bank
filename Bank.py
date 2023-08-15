@@ -5,6 +5,7 @@ from time import sleep
 count_failed = 0
 action = 0
 data_global = []
+DATA_FILE_PATH = "user.json"
 # Dữ liệu user mặc định
 user_global = {
     "stk": "",
@@ -42,6 +43,9 @@ def enter_account(list_user):
         print("Số tài khoản không tồn tại. Vui lòng nhập lại.")
         count_failed += 1
 
+    if count_failed >= 3:
+        exits()
+
 
 def validate_password(user):
     global count_failed
@@ -51,8 +55,12 @@ def validate_password(user):
         print("Đăng nhập thành công.")
         return True
     else:
-        print("Sai mật khẩu. Vui lòng nhập lại.")
-        return False
+        print(f"Sai mật khẩu. Bạn còn {2 - count_failed} lần nhập.")
+        if count_failed >= 2:
+            exits()
+        else:
+            count_failed += 1
+            return False
 
 
 # Tìm user bằng stk
@@ -74,7 +82,7 @@ def take_amount(user, data_old):
         if amount >= get_amount:
             amount -= get_amount
             user['amount'] = amount
-            update_data(user, data_old, "user.json")  # Cập nhật lại dữ liệu
+            update_data(user, data_old, DATA_FILE_PATH)  # Cập nhật lại dữ liệu
             print(f"Đã rút {get_amount}. Số dư còn lại {amount}")
             return user
         else:
@@ -92,9 +100,8 @@ def transfer(user, data):
         5. Thoát
         ''')
 
-        path = ""
         if receive_bank == '0':
-            path = "user.json"
+            path = DATA_FILE_PATH
         elif receive_bank == '1':
             path = "mbbank.json"
         elif receive_bank == '2':
@@ -119,7 +126,7 @@ def transfer(user, data):
                     user['amount'] = user_amount_new
                     print(f"Chuyển thành công số tìền {amount_send} cho {receive_user['name']}.")
                     update_data(receive_user, data_receive_bank, path)
-                    update_data(user, data, "user.json")  # Cập nhật dữ liệu
+                    update_data(user, data, DATA_FILE_PATH)  # Cập nhật dữ liệu
                     return user
                 else:
                     print("Số dư không đủ.")
@@ -146,7 +153,7 @@ def change_password(user, data):
             for _ in range(3):
                 if len(pass_new) in range(6, 16):
                     user['password'] = pass_new
-                    update_data(user, data, "user.json")
+                    update_data(user, data, DATA_FILE_PATH)
                     print("Đổi mật khẩu thành công.")
                     return user
                 else:
@@ -168,7 +175,7 @@ def exits():
 def main():
     global count_failed, action, user_global, data_global
 
-    data_global = load_data("user.json")
+    data_global = load_data(DATA_FILE_PATH)
 
     print("--- Chào mừng đến với ABC BANK ---")
     user_global = enter_account(data_global)
@@ -180,37 +187,40 @@ def main():
         if validate_password(user_global):
             count_failed = 0
             while True:
+                if user_global is None:
+                    user_global = enter_account(data_global)
+                    while True:
+                        if validate_password(user_global):
+                            break
+
                 print("--- Chào mừng đến với ABC BANK ---")
                 print(''' Chức năng : 
                 1. Rút tiền
                 2. Chuyển tiền
                 3. Kiểm tra số dư
                 4. Đổi mật khẩu
-                5. Kết thúc
+                5. Đổi tài khoản
+                6. Kết thúc
                 ''')
                 action = input("Nhập lựa chọn : ")
                 # Đặt lại giá trị cho user và danh sách user sau mỗi thao tác
                 if action == '1':
                     user_global = take_amount(user_global, data_global)
-                    data_global = load_data("user.json")
+                    data_global = load_data(DATA_FILE_PATH)
                 elif action == '2':
                     user_global = transfer(user_global, data_global)
-                    data_global = load_data("user.json")
+                    data_global = load_data(DATA_FILE_PATH)
                 elif action == '3':
                     check_amount(user_global)
                 elif action == '4':
                     user_global = change_password(user_global, data_global)
-                    data_global = load_data("user.json")
+                    data_global = load_data(DATA_FILE_PATH)
                 elif action == '5':
+                    user_global = None
+                elif action == '6':
                     exit()
                 else:
                     print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
-        else:
-            count_failed += 1
-            print(f"Sai mật khẩu. Bạn còn {3 - count_failed} lần nhập.")
-
-        if count_failed >= 3:
-            exits()
 
 
 if __name__ == "__main__":
