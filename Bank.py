@@ -3,8 +3,8 @@ import sys
 from getpass import getpass
 from time import sleep
 
-DATA_FILE_PATH = "user.json"
 ERROR_MESSAGE = "Hệ thống lỗi!"
+BANK_LIST = ["abcbank", "mbbank", "techcombank", "vietcombank", "viettinbank"]
 
 
 def load_data(path):
@@ -24,6 +24,10 @@ def update_data(users, data, path):
             json.dump(data, file, ensure_ascii=False, indent=4)
     except IOError:
         sys.exit(ERROR_MESSAGE)
+
+
+def get_path(s):
+    return f"{s}.json"
 
 
 def display_message(message):
@@ -65,14 +69,14 @@ def validate_password(user):
 
 def take_amount(user, data):
     amount = int(user['amount'])
-    get_amount = get_positive_integer_input("Nhập số tiền muốn rút (Nhập 0 để thoát): ")
-    if get_amount == 0:
+    get_amount = get_positive_integer_input("Nhập số tiền muốn rút (Nhập 1 để thoát): ")
+    if get_amount == 1:
         return
     for _ in range(3):
         if amount >= get_amount:
             amount -= get_amount
             user['amount'] = amount
-            update_data(user, data, DATA_FILE_PATH)
+            update_data(user, data, get_path(BANK_LIST[0]))
             display_message(f"Đã rút {get_amount}. Số dư còn lại {amount}")
             return user
         else:
@@ -80,19 +84,16 @@ def take_amount(user, data):
 
 
 def transfer_money(user, data):
-    while True:
-        receive_bank = input(''' Chọn ngân hàng nhận :
-        1. MB
-        2. Techcombank
-        3. Vietcombank
-        4. Viettinbank
-        5. Thoát
-        ''')
+    bank_list = ''
+    count = 0
+    for bank in BANK_LIST:
+        bank_list += f"{count}. {bank}\n"
+        count += 1
 
-        if receive_bank == '0':
-            path = DATA_FILE_PATH
-        elif receive_bank in ('1', '2', '3', '4'):
-            path = f"{receive_bank.lower()}bank.json"
+    while True:
+        receive_bank = int(input(f"Chọn ngân hàng nhận :\n{bank_list}"))
+        if receive_bank in range(0, 5):
+            path = get_path(BANK_LIST[receive_bank])
         else:
             display_message("Ngân hàng không hợp lệ!")
             break
@@ -103,12 +104,13 @@ def transfer_money(user, data):
             receive_user = check_exist(data_receive_bank, receive_stk)
             if receive_user:
                 amount_send = get_positive_integer_input("Nhập số tiền chuyển: ")
-                if amount_send <= int(user['amount']):
-                    receive_user['amount'] += amount_send
-                    user['amount'] -= amount_send
+                amount_old = int(user['amount'])
+                if amount_send <= amount_old:
+                    receive_user['amount'] = int(receive_user['amount']) + amount_send
+                    user['amount'] = int(user['amount']) - amount_send
                     display_message(f"Chuyển thành công số tìền {amount_send} cho {receive_user['name']}.")
                     update_data(receive_user, data_receive_bank, path)
-                    update_data(user, data, DATA_FILE_PATH)
+                    update_data(user, data, get_path(BANK_LIST[0]))
                     return user
                 else:
                     display_message("Số dư không đủ.")
@@ -134,7 +136,7 @@ def change_password(user, data):
             for _ in range(3):
                 if 6 <= len(pass_new) <= 15:
                     user['password'] = pass_new
-                    update_data(user, data, DATA_FILE_PATH)
+                    update_data(user, data, get_path(BANK_LIST[0]))
                     display_message("Đổi mật khẩu thành công.")
                     return user
                 else:
@@ -153,7 +155,7 @@ def exits():
 
 
 def main():
-    data_global = load_data(DATA_FILE_PATH)
+    data_global = load_data(get_path(BANK_LIST[0]))
 
     display_message("--- Chào mừng đến với ABC BANK ---")
     user_global = enter_account(data_global)
@@ -180,10 +182,12 @@ def main():
                 user_global = change_password(user_global, data_global)
             elif action == '5':
                 do_logout = input("Bạn có đồng ý thoát (y/n): ")
-                if do_logout.lower() == 'y':
-                    sys.exit("Kết thúc!")
-                else:
-                    display_message("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+                while True:
+                    if do_logout.lower() == 'y':
+                        sys.exit("Kết thúc!")
+                    else:
+                        display_message("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
+                        do_logout = input("Bạn có đồng ý thoát (y/n): ")
 
 
 if __name__ == "__main__":
